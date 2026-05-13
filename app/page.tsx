@@ -23,11 +23,14 @@ export default function LandingPage() {
             <Link href="#oracle" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
               The Oracle
             </Link>
-            <Link href="#sponsors" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
-              For sponsors
+            <Link href="#trust-model" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
+              Trust model
             </Link>
-            <Link href="#trust" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
-              Trust chain
+            <Link href="#roles" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
+              Escrow
+            </Link>
+            <Link href="#sponsors" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
+              Sponsors
             </Link>
             <Link href="/admin" className="font-body text-sm text-nimbus-300 link-draw hover:text-text">
               Admin
@@ -38,6 +41,21 @@ export default function LandingPage() {
           </Link>
         </div>
       </nav>
+
+      {/* Hackathon banner */}
+      <div className="border-b border-[var(--border)] bg-[var(--bg-2)]/40">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2.5 text-[11px]">
+          <span className="font-mono uppercase tracking-widest text-nimbus-400">
+            ☁︎ Built for Boundless × Trustless Work · May 13–16, 2026
+          </span>
+          <Link
+            href="/about"
+            className="font-mono uppercase tracking-widest text-nimbus-300 link-draw hover:text-text"
+          >
+            Submission details →
+          </Link>
+        </div>
+      </div>
 
       {/* Hero */}
       <section className="relative bg-aurora">
@@ -183,6 +201,106 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trust model — the four judging questions */}
+      <section id="trust-model" className="mx-auto max-w-7xl px-6 py-24">
+        <Reveal>
+          <div className="section-label mb-4">Trust model</div>
+        </Reveal>
+        <Reveal delay={100}>
+          <h2 className="mb-12 max-w-3xl font-display text-4xl text-text md:text-5xl">
+            Four answers every escrow product owes you.
+          </h2>
+        </Reveal>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[
+            {
+              q: 'What trust problem are we solving?',
+              a:
+                "Smallholder farmers can't afford traditional crop insurance — premiums are too high, claims take months, and adjusters never visit their villages. Climate funds want to send relief faster than NGO operations allow.",
+            },
+            {
+              q: 'Who are the parties?',
+              a:
+                'The farmer (Receiver), the sponsor pool funding the coverage, Nimbus as the platform operator that runs the oracle, and Open-Meteo as the off-chain weather source.',
+            },
+            {
+              q: 'What condition unlocks the funds?',
+              a:
+                "Cumulative rainfall at the farmer's GPS coordinates falling below their season threshold (default 50mm). The oracle reads from Open-Meteo's historical archive — deterministic, auditable, no human judgement.",
+            },
+            {
+              q: 'Who resolves disputes?',
+              a:
+                'The platform wallet is the Dispute Resolver of last resort. In practice the oracle is parametric — there is nothing to dispute: rainfall either crossed the threshold or it did not, and the on-chain record proves which.',
+            },
+          ].map((item, i) => (
+            <Reveal key={item.q} delay={i * 100}>
+              <div className="card lift p-7 h-full">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-nimbus-400">
+                  Q · 0{i + 1}
+                </div>
+                <h3 className="mt-2 font-head text-lg text-text">{item.q}</h3>
+                <p className="mt-3 font-body text-sm text-nimbus-300">{item.a}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* Escrow roles & milestone */}
+      <section id="roles" className="mx-auto max-w-7xl px-6 py-24">
+        <Reveal>
+          <div className="section-label mb-4">The escrow</div>
+        </Reveal>
+        <Reveal delay={100}>
+          <h2 className="mb-3 max-w-3xl font-display text-4xl text-text md:text-5xl">
+            One Single-Release escrow per farmer.
+          </h2>
+        </Reveal>
+        <Reveal delay={180}>
+          <p className="mb-12 max-w-2xl font-body text-nimbus-300">
+            Trustless Work&apos;s primitive: a milestone-based escrow that only releases when its
+            condition is met. Every role is the platform wallet so the oracle can fire the payout
+            autonomously — except <span className="text-text">Receiver</span>, locked to the
+            farmer&apos;s custodial wallet so funds can only ever land with them.
+          </p>
+        </Reveal>
+        <Reveal delay={240}>
+          <div className="card overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-[var(--border)] md:grid-cols-5">
+              {[
+                { role: 'Approver', who: 'Platform', tone: 'mute' },
+                { role: 'Service Provider', who: 'Platform', tone: 'mute' },
+                { role: 'Release Signer', who: 'Platform', tone: 'mute' },
+                { role: 'Dispute Resolver', who: 'Platform', tone: 'mute' },
+                { role: 'Receiver', who: 'Farmer ✓', tone: 'accent' },
+              ].map((r) => (
+                <div key={r.role} className="px-5 py-6 text-center">
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/70">
+                    {r.role}
+                  </div>
+                  <div
+                    className={`mt-2 font-head text-lg ${
+                      r.tone === 'accent' ? 'text-oracle-safe' : 'text-text'
+                    }`}
+                  >
+                    {r.who}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-[var(--border)] bg-[var(--bg-3)]/60 px-5 py-4 font-mono text-[11px] text-nimbus-300">
+              <span className="text-nimbus-400">milestone[0]</span> ·{' '}
+              <span className="text-text">drought payout</span> ·{' '}
+              <span className="text-text">amount</span>:{' '}
+              <span className="text-oracle-safe">coverage.usdc</span> ·{' '}
+              <span className="text-text">currency</span>:{' '}
+              <span className="text-oracle-safe">USDC</span>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* For sponsors */}
       <section id="sponsors" className="mx-auto max-w-7xl px-6 py-24">
         <Reveal>
@@ -287,23 +405,66 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border)]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">☁︎</span>
-            <span className="font-head text-lg font-extrabold text-text">Nimbus</span>
-            <span className="font-body text-xs text-nimbus-300/70">
-              · When rain fails, Nimbus pays.
-            </span>
+      <footer className="border-t border-[var(--border)] bg-[var(--bg-2)]/30">
+        <div className="mx-auto max-w-7xl px-6 py-12">
+          <div className="grid gap-10 md:grid-cols-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">☁︎</span>
+                <span className="font-head text-lg font-extrabold text-text">Nimbus</span>
+              </div>
+              <p className="mt-3 font-body text-sm text-nimbus-300/80">
+                When rain fails, Nimbus pays. Parametric drought insurance on Stellar.
+              </p>
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-widest text-nimbus-400">
+                Built for Boundless × Trustless Work · May 2026
+              </p>
+            </div>
+
+            <div>
+              <div className="section-label mb-3">Product</div>
+              <ul className="space-y-2 font-body text-sm text-nimbus-300">
+                <li><Link href="/farmer/onboarding" className="hover:text-text">Enrol a farm</Link></li>
+                <li><Link href="/admin/onboarding" className="hover:text-text">Sponsor a region</Link></li>
+                <li><Link href="/admin" className="hover:text-text">Admin dashboard</Link></li>
+                <li><Link href="/about" className="hover:text-text">Submission details</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="section-label mb-3">Trustless Work</div>
+              <ul className="space-y-2 font-body text-sm text-nimbus-300">
+                <li><a href="https://docs.trustlesswork.com" target="_blank" rel="noreferrer" className="hover:text-text">Docs ↗</a></li>
+                <li><a href="https://dapp.trustlesswork.com" target="_blank" rel="noreferrer" className="hover:text-text">BackOffice dApp ↗</a></li>
+                <li><a href="https://viewer.trustlesswork.com" target="_blank" rel="noreferrer" className="hover:text-text">Escrow Viewer ↗</a></li>
+                <li><a href="https://github.com/Trustless-Work" target="_blank" rel="noreferrer" className="hover:text-text">GitHub ↗</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="section-label mb-3">Stack</div>
+              <ul className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70">
+                <li>Stellar Soroban</li>
+                <li>Trustless Work REST</li>
+                <li>Open-Meteo</li>
+                <li>Supabase</li>
+                <li>Next.js 14 · Vercel</li>
+              </ul>
+            </div>
           </div>
-          <div className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70">
-            <span>Stellar</span>
-            <span>·</span>
-            <span>Trustless Work</span>
-            <span>·</span>
-            <span>Open-Meteo</span>
-            <span>·</span>
-            <span>Supabase</span>
+
+          <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-[var(--border)] pt-6 md:flex-row md:items-center">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/60">
+              © 2026 Nimbus · open source under MIT
+            </span>
+            <a
+              href="https://boundlessfi.xyz"
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/60 hover:text-text"
+            >
+              boundlessfi.xyz ↗
+            </a>
           </div>
         </div>
       </footer>
