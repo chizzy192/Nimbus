@@ -1,9 +1,10 @@
 # Nimbus
 
-**Parametric drought insurance for Africa's smallholder farmers.**
-Built on Stellar · Trustless Work · Open-Meteo.
+> **When rain fails, Nimbus pays.**
 
-> When rain fails, Nimbus pays.
+Parametric drought insurance for Africa's smallholder farmers, built on
+Stellar, Trustless Work, and Open-Meteo. Submitted to the **Boundless ×
+Trustless Work** hackathon, 13–16 May 2026.
 
 ---
 
