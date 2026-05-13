@@ -4,9 +4,11 @@ import { getEscrowStatus } from '@/lib/trustlesswork';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const contractId = req.nextUrl.searchParams.get('contractId');
+  const contractId =
+    req.nextUrl.searchParams.get('contract_id') ??
+    req.nextUrl.searchParams.get('contractId');
   if (!contractId) {
-    return NextResponse.json({ error: 'contractId required' }, { status: 400 });
+    return NextResponse.json({ error: 'contract_id required' }, { status: 400 });
   }
   try {
     const data = await getEscrowStatus(contractId);

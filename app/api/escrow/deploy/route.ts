@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const unsignedXdr = await deployFarmerEscrow({
+    const { unsignedXdr, contractId } = await deployFarmerEscrow({
       id: farmer.id,
       name: farmer.name,
       region: farmer.region ?? '—',
@@ -35,21 +35,23 @@ export async function POST(req: NextRequest) {
       thresholdMm: farmer.drought_threshold_mm,
     });
 
+    if (!contractId) {
+      return NextResponse.json(
+        { error: 'Trustless Work deploy response did not include a contractId' },
+        { status: 502 }
+      );
+    }
+
     const signed = signXDR(unsignedXdr, process.env.PLATFORM_WALLET_SECRET!);
     const tx = await submitToStellar(signed);
-
-    // Trustless Work returns contractId via webhook or status — best-effort capture here.
-    const contractId =
-      (tx as { contractId?: string }).contractId ??
-      (tx as { hash?: string }).hash ??
-      null;
+    const txHash = (tx as { hash?: string }).hash ?? null;
 
     await supabase
       .from('farmers')
       .update({ contract_id: contractId, status: 'active' })
       .eq('id', farmer.id);
 
-    return NextResponse.json({ ok: true, contractId, tx });
+    return NextResponse.json({ ok: true, contractId, txHash, tx });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: msg }, { status: 500 });
