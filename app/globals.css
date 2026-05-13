@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Fira+Code:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #050d0a;
+  --bg-2: #0c1e14;
+  --bg-3: #112a1a;
+  --green-900: #064e3b;
+  --green-700: #047857;
+  --green-500: #10b981;
+  --green-400: #34d399;
+  --green-300: #6ee7b7;
+  --green-100: #d1fae5;
+  --cyan: #22d3ee;
+  --amber: #fbbf24;
+  --red-400: #f87171;
+  --text: #ecfdf5;
+  --text-muted: #6ee7b7;
+  --text-dim: #34d399;
+  --border: rgba(16, 185, 129, 0.12);
+  --border-strong: rgba(16, 185, 129, 0.25);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.35);
+  color: var(--text);
+}
+
+.section-label {
+  font-family: 'Fira Code', monospace;
+  color: var(--green-500);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--green-500);
+}
+
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.btn-primary {
+  background: var(--green-500);
+  color: var(--bg);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  transition: background 0.15s ease;
+}
+.btn-primary:hover { background: var(--green-400); }
+
+.btn-ghost {
+  border: 1px solid var(--border-strong);
+  color: var(--green-300);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.btn-ghost:hover { background: rgba(16, 185, 129, 0.05); }
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Leaflet container in dark theme */
+.leaflet-container {
+  background: var(--bg-3) !important;
+  border-radius: 1rem;
+}
+.leaflet-tile {
+  filter: brightness(0.55) saturate(0.7) hue-rotate(85deg);
+}
