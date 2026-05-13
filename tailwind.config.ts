@@ -55,11 +55,42 @@ const config: Config = {
           '0%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(-50%)' },
         },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(24px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        drift: {
+          '0%': { transform: 'translate(0,0)' },
+          '50%': { transform: 'translate(12px,-8px)' },
+          '100%': { transform: 'translate(0,0)' },
+        },
+        glow: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(16,185,129,0.0)' },
+          '50%': { boxShadow: '0 0 28px 4px rgba(16,185,129,0.35)' },
+        },
+        sweep: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
       },
       animation: {
         'pulse-dot': 'pulseDot 1.6s ease-in-out infinite',
         'ring-pulse': 'ringPulse 2.4s ease-out infinite',
         ticker: 'ticker 40s linear infinite',
+        'fade-up': 'fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-in': 'fadeIn 0.6s ease-out both',
+        shimmer: 'shimmer 6s linear infinite',
+        drift: 'drift 14s ease-in-out infinite',
+        glow: 'glow 3s ease-in-out infinite',
+        sweep: 'sweep 2.4s ease-in-out infinite',
       },
     },
   },
