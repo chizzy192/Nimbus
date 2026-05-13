@@ -2,8 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { WalletConnect } from '@/components/WalletConnect';
+import { useFirstVisit } from '@/hooks/useFirstVisit';
 import { formatMm, formatUsdc, shortHash } from '@/lib/utils';
 import type { Farmer, OracleCheck } from '@/types/nimbus';
 
@@ -17,10 +20,18 @@ const FarmMap = dynamic(() => import('@/components/FarmMap').then((m) => m.FarmM
 });
 
 export default function AdminOverviewPage() {
+  const router = useRouter();
+  const visit = useFirstVisit('admin');
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [logs, setLogs] = useState<OracleCheck[]>([]);
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (visit.isFirst === true) {
+      router.replace('/admin/onboarding');
+    }
+  }, [visit.isFirst, router]);
 
   async function refresh() {
     const [f, l] = await Promise.all([
@@ -108,6 +119,14 @@ export default function AdminOverviewPage() {
             <Link href="/admin/pools" className="text-nimbus-300 hover:text-text">
               Pools
             </Link>
+            <Link
+              href="/admin/onboarding"
+              className="text-nimbus-300 hover:text-text"
+              title="Tour the admin"
+            >
+              Help
+            </Link>
+            <WalletConnect />
           </div>
         </div>
       </nav>

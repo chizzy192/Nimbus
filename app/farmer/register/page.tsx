@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useFirstVisit } from '@/hooks/useFirstVisit';
 
 const FarmMap = dynamic(() => import('@/components/FarmMap').then((m) => m.FarmMap), {
   ssr: false,
@@ -37,9 +38,16 @@ const COVERAGE_TIERS = [
 
 export default function FarmerRegisterPage() {
   const router = useRouter();
+  const visit = useFirstVisit('farmer');
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (visit.isFirst === true) {
+      router.replace('/farmer/onboarding');
+    }
+  }, [visit.isFirst, router]);
 
   const [form, setForm] = useState<FormState>({
     name: '',
