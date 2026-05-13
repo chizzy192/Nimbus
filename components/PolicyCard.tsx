@@ -38,8 +38,15 @@ export function PolicyCard({ farmer }: { farmer: Farmer }) {
           <dt className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/70">
             Premium
           </dt>
-          <dd className="font-display text-2xl text-text">
+          <dd className="flex items-baseline gap-2 font-display text-2xl text-text">
             {formatUsdc(farmer.premium_usdc)}
+            <span
+              className={`font-mono text-[10px] uppercase tracking-widest ${
+                farmer.premium_paid ? 'text-nimbus-400' : 'text-oracle-warning'
+              }`}
+            >
+              {farmer.premium_paid ? '· paid' : '· due'}
+            </span>
           </dd>
         </div>
         <div>

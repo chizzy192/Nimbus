@@ -5,6 +5,7 @@ import { fetchSeasonRainfall } from '@/lib/openmeteo';
 import { PolicyCard } from '@/components/PolicyCard';
 import { RainfallChart } from '@/components/RainfallChart';
 import { StatusBadge } from '@/components/StatusBadge';
+import { CopyLinkButton } from '@/components/CopyLinkButton';
 import { formatMm, rainfallStatus, shortHash, stellarExpertTxUrl } from '@/lib/utils';
 import type { Farmer, OracleCheck } from '@/types/nimbus';
 
@@ -53,12 +54,21 @@ export default async function FarmerDashboardPage({
             <span className="text-2xl">☁︎</span>
             <span className="font-head text-2xl font-extrabold text-text">Nimbus</span>
           </Link>
-          <Link
-            href="/admin"
-            className="font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70 hover:text-text"
-          >
-            Admin →
-          </Link>
+          <div className="flex items-center gap-4">
+            <CopyLinkButton />
+            <Link
+              href="/farmer/onboarding"
+              className="font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70 hover:text-text"
+            >
+              Help
+            </Link>
+            <Link
+              href="/admin"
+              className="font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70 hover:text-text"
+            >
+              Admin →
+            </Link>
+          </div>
         </div>
       </nav>
 

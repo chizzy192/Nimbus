@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFreighter } from '@/hooks/useFreighter';
 import { shortHash } from '@/lib/utils';
 
@@ -9,6 +9,25 @@ const FREIGHTER_URL = 'https://www.freighter.app/';
 export function WalletConnect() {
   const fr = useFreighter();
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   if (fr.status === 'detecting' || fr.status === 'idle') {
     return (
@@ -72,7 +91,7 @@ export function WalletConnect() {
 
   // Connected
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <button
         className="flex items-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--bg-2)] px-3 py-1.5 font-mono text-[11px] text-nimbus-300 transition hover:bg-[rgba(16,185,129,0.05)]"
         onClick={() => setOpen((o) => !o)}
