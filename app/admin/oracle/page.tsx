@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { WalletConnect } from '@/components/WalletConnect';
 import { formatMm, rainfallStatus, shortHash, stellarExpertTxUrl } from '@/lib/utils';
 import type { Farmer, OracleCheck } from '@/types/nimbus';
 
@@ -142,6 +143,10 @@ export default function AdminOraclePage() {
             <Link href="/admin/pools" className="text-nimbus-300 hover:text-text">
               Pools
             </Link>
+            <Link href="/admin/onboarding" className="text-nimbus-300 hover:text-text">
+              Help
+            </Link>
+            <WalletConnect />
           </div>
         </div>
       </nav>

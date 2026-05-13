@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useFreighter } from '@/hooks/useFreighter';
+import { WalletConnect } from '@/components/WalletConnect';
 import { StatusBadge } from '@/components/StatusBadge';
-import { formatUsdc, shortHash, stellarExpertContractUrl } from '@/lib/utils';
+import { formatUsdc, shortHash, stellarExpertContractUrl, escrowViewerUrl } from '@/lib/utils';
 import type { Farmer } from '@/types/nimbus';
 
 export default function AdminDeployPage() {
-  const fr = useFreighter();
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyStage, setBusyStage] = useState<'deploy' | 'fund' | null>(null);
@@ -93,6 +92,7 @@ export default function AdminDeployPage() {
             <Link href="/admin/pools" className="text-nimbus-300 hover:text-text">
               Pools
             </Link>
+            <WalletConnect />
           </div>
         </div>
       </nav>
@@ -100,18 +100,13 @@ export default function AdminDeployPage() {
       <section className="mx-auto max-w-7xl px-6 py-10">
         <div className="card mb-8 flex items-center justify-between p-5">
           <div>
-            <div className="section-label mb-1">Platform wallet</div>
-            <div className="font-mono text-sm text-text">
-              {fr.publicKey ? shortHash(fr.publicKey, 8, 8) : 'Not connected'}
-            </div>
+            <div className="section-label mb-1">Sponsor wallet</div>
+            <p className="mt-1 font-body text-sm text-nimbus-300/80">
+              Connect Freighter to deploy and fund escrows. Funds are signed server-side
+              by the platform wallet; your wallet authorises the deployment.
+            </p>
           </div>
-          {fr.publicKey ? (
-            <StatusBadge status="active" />
-          ) : (
-            <button className="btn-primary text-sm" onClick={fr.connect} disabled={fr.loading}>
-              {fr.loading ? 'Connecting…' : 'Connect Freighter'}
-            </button>
-          )}
+          <WalletConnect />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -145,14 +140,24 @@ export default function AdminDeployPage() {
                     </td>
                     <td className="px-5 py-3 font-mono text-[11px] text-nimbus-300">
                       {f.contract_id ? (
-                        <a
-                          href={stellarExpertContractUrl(f.contract_id)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="hover:text-text hover:underline"
-                        >
-                          {shortHash(f.contract_id, 6, 6)}
-                        </a>
+                        <div className="flex flex-col gap-0.5">
+                          <a
+                            href={stellarExpertContractUrl(f.contract_id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-text hover:underline"
+                          >
+                            {shortHash(f.contract_id, 6, 6)}
+                          </a>
+                          <a
+                            href={escrowViewerUrl(f.contract_id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-nimbus-400 hover:underline"
+                          >
+                            view escrow ↗
+                          </a>
+                        </div>
                       ) : (
                         '—'
                       )}

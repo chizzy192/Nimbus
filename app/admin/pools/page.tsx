@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { WalletConnect } from '@/components/WalletConnect';
 import { formatUsdc } from '@/lib/utils';
 import type { CoveragePool } from '@/types/nimbus';
 
@@ -99,6 +100,10 @@ export default function AdminPoolsPage() {
             <Link href="/admin/pools" className="text-text">
               Pools
             </Link>
+            <Link href="/admin/onboarding" className="text-nimbus-300 hover:text-text">
+              Help
+            </Link>
+            <WalletConnect />
           </div>
         </div>
       </nav>

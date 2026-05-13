@@ -33,6 +33,10 @@ export function stellarExpertContractUrl(
   return `https://stellar.expert/explorer/${network}/contract/${contractId}`;
 }
 
+export function escrowViewerUrl(contractId: string): string {
+  return `https://viewer.trustlesswork.com/escrow/${contractId}`;
+}
+
 export function rainfallStatus(totalMm: number, thresholdMm: number): 'safe' | 'warning' | 'trigger' {
   if (totalMm < thresholdMm) return 'trigger';
   if (totalMm < thresholdMm * 1.4) return 'warning';

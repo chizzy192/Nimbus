@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { StatusBadge } from './StatusBadge';
-import { formatMm, formatUsdc, shortHash, stellarExpertContractUrl } from '@/lib/utils';
+import { formatMm, formatUsdc, shortHash, stellarExpertContractUrl, escrowViewerUrl } from '@/lib/utils';
 import type { Farmer } from '@/types/nimbus';
 
 export function PolicyCard({ farmer }: { farmer: Farmer }) {
@@ -61,16 +61,25 @@ export function PolicyCard({ farmer }: { farmer: Farmer }) {
       </dl>
 
       {farmer.contract_id && (
-        <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/70">
-            Escrow Contract
-          </span>
+        <div className="mt-4 border-t border-[var(--border)] pt-4">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-nimbus-300/70">
+              Escrow Contract
+            </span>
+            <Link
+              href={stellarExpertContractUrl(farmer.contract_id)}
+              target="_blank"
+              className="font-mono text-xs text-nimbus-400 hover:underline"
+            >
+              {shortHash(farmer.contract_id)}
+            </Link>
+          </div>
           <Link
-            href={stellarExpertContractUrl(farmer.contract_id)}
+            href={escrowViewerUrl(farmer.contract_id)}
             target="_blank"
-            className="font-mono text-xs text-nimbus-400 hover:underline"
+            className="mt-1 inline-block font-mono text-[10px] uppercase tracking-widest text-nimbus-400 hover:underline"
           >
-            {shortHash(farmer.contract_id)}
+            Open in Escrow Viewer ↗
           </Link>
         </div>
       )}
