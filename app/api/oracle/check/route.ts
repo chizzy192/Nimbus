@@ -18,7 +18,27 @@ interface CheckResult {
   error?: string;
 }
 
+function isAuthorised(req: NextRequest): boolean {
+  // In production we expect either:
+  //   - the Vercel Cron header (auto-injected by Vercel), or
+  //   - an Authorization: Bearer <CRON_SECRET> header for manual runs.
+  // In development we let everything through so the admin oracle button works.
+  if (process.env.NODE_ENV !== 'production') return true;
+
+  if (req.headers.get('x-vercel-cron') === '1') return true;
+
+  const expected = process.env.CRON_SECRET;
+  if (!expected) return true; // not configured — allow (single-user demo)
+
+  const auth = req.headers.get('authorization') ?? '';
+  return auth === `Bearer ${expected}`;
+}
+
 export async function GET(req: NextRequest) {
+  if (!isAuthorised(req)) {
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 });
+  }
+
   const supabase = supabaseServer();
   const targetId = req.nextUrl.searchParams.get('farmer_id');
   const force = req.nextUrl.searchParams.get('force') === 'true';
@@ -62,14 +82,35 @@ export async function GET(req: NextRequest) {
       if (triggered && farmer.contract_id) {
         const secret = process.env.PLATFORM_WALLET_SECRET!;
 
-        const approveXdr = await approveMilestone(farmer.contract_id);
-        const signedApprove = signXDR(approveXdr, secret);
-        await submitToStellar(signedApprove);
+        let approveSubmitted = false;
+        let txHash = '';
+        try {
+          const approveXdr = await approveMilestone(farmer.contract_id);
+          await submitToStellar(signXDR(approveXdr, secret));
+          approveSubmitted = true;
 
-        const releaseXdr = await releaseFunds(farmer.contract_id);
-        const signedRelease = signXDR(releaseXdr, secret);
-        const tx = await submitToStellar(signedRelease);
-        const txHash = (tx as { hash?: string }).hash ?? '';
+          const releaseXdr = await releaseFunds(farmer.contract_id);
+          const tx = await submitToStellar(signXDR(releaseXdr, secret));
+          txHash = (tx as { hash?: string }).hash ?? '';
+        } catch (payoutErr) {
+          const msg = payoutErr instanceof Error ? payoutErr.message : String(payoutErr);
+          // Roll the check row's `triggered` back to false so this farmer is re-tried tomorrow
+          // and we don't leave a misleading on-chain audit trail.
+          if (checkInsert.data?.id) {
+            await supabase
+              .from('oracle_checks')
+              .update({ triggered: false })
+              .eq('id', checkInsert.data.id);
+          }
+          results.push({
+            farmer_id: farmer.id,
+            triggered: false,
+            rainfall_mm: totalMm,
+            threshold_mm: farmer.drought_threshold_mm,
+            error: `payout ${approveSubmitted ? 'release' : 'approve'} failed: ${msg}`,
+          });
+          continue;
+        }
 
         await supabase
           .from('farmers')
