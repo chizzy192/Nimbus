@@ -2,11 +2,29 @@
   "name": "nimbus",
   "version": "0.1.0",
   "private": true,
+  "description": "Parametric drought insurance for African smallholder farmers, built on Stellar with Trustless Work and Open-Meteo. Submitted to the Boundless × Trustless Work hackathon, May 2026.",
+  "keywords": [
+    "stellar",
+    "trustless-work",
+    "parametric-insurance",
+    "soroban",
+    "usdc",
+    "open-meteo",
+    "smallholder",
+    "climate-finance",
+    "nextjs"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.18"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf .next"
   },
   "dependencies": {
     "@stellar/freighter-api": "^4.1.0",
