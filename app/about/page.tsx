@@ -7,6 +7,8 @@ export const metadata = {
 };
 
 const KEY_LINKS = [
+  { label: 'Team banner (SVG)', href: '/banner.svg' },
+  { label: 'OG image (PNG)', href: '/opengraph-image' },
   { label: 'Trustless Work docs', href: 'https://docs.trustlesswork.com' },
   { label: 'Developer hub', href: 'https://www.trustlesswork.com/developers' },
   { label: 'BackOffice dApp', href: 'https://dapp.trustlesswork.com' },
@@ -36,6 +38,19 @@ export default function AboutPage() {
       </nav>
 
       <section className="mx-auto max-w-4xl px-6 py-16">
+        <Reveal>
+          {/* Team banner — the same asset we ship for the submission portal */}
+          <a
+            href="/banner.svg"
+            target="_blank"
+            rel="noreferrer"
+            className="mb-12 block overflow-hidden rounded-2xl border border-[var(--border-strong)] shadow-[0_20px_60px_-20px_rgba(16,185,129,0.4)] lift"
+            title="Open team banner"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/banner.svg" alt="Nimbus team banner" className="block w-full" />
+          </a>
+        </Reveal>
         <Reveal>
           <div className="section-label mb-4">Hackathon submission</div>
         </Reveal>

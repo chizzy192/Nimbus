@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/banner.svg" alt="Nimbus — When rain fails, Nimbus pays." width="100%"/>
+</p>
+
 # Nimbus
 
 > **When rain fails, Nimbus pays.**
