@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabaseServer } from '@/lib/supabase-server';
-import { fetchSeasonRainfall } from '@/lib/openmeteo';
+import { fetchSeasonRainfall, type SeasonState } from '@/lib/openmeteo';
 import { PolicyCard } from '@/components/PolicyCard';
 import { RainfallChart } from '@/components/RainfallChart';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -29,11 +29,16 @@ export default async function FarmerDashboardPage({
   let dailyMm: number[] = [];
   let totalMm = 0;
   let rainfallError: string | null = null;
+  let seasonState: SeasonState = 'ok';
+  let daysUntilStart = 0;
   try {
     const r = await fetchSeasonRainfall(f.latitude, f.longitude, f.season_start);
     dailyMm = r.dailyMm;
     totalMm = r.totalMm;
+    seasonState = r.state;
+    daysUntilStart = r.daysUntilStart;
   } catch (e) {
+    seasonState = 'error';
     rainfallError = e instanceof Error ? e.message : 'rainfall fetch failed';
   }
 
@@ -44,7 +49,8 @@ export default async function FarmerDashboardPage({
     .order('checked_at', { ascending: false })
     .limit(7);
 
-  const live = rainfallStatus(totalMm, f.drought_threshold_mm);
+  // Never compute a "live" status from missing data — that's how false TRIGGERs happen.
+  const live = seasonState === 'ok' ? rainfallStatus(totalMm, f.drought_threshold_mm) : 'pending';
 
   return (
     <main className="min-h-screen bg-grid">
@@ -56,6 +62,12 @@ export default async function FarmerDashboardPage({
           </Link>
           <div className="flex items-center gap-4">
             <CopyLinkButton />
+            <Link
+              href={`/farmer/${f.id}/settings`}
+              className="font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70 hover:text-text"
+            >
+              Settings
+            </Link>
             <Link
               href="/farmer/onboarding"
               className="font-mono text-[11px] uppercase tracking-widest text-nimbus-300/70 hover:text-text"
@@ -78,7 +90,18 @@ export default async function FarmerDashboardPage({
             <PolicyCard farmer={f} />
 
             <div className="mt-6">
-              {rainfallError ? (
+              {seasonState === 'not-started' ? (
+                <div className="card p-6">
+                  <div className="section-label mb-2">Season not started</div>
+                  <div className="font-display text-2xl text-text">
+                    Coverage begins in {daysUntilStart} day{daysUntilStart === 1 ? '' : 's'}
+                  </div>
+                  <p className="mt-2 font-body text-sm text-nimbus-300/80">
+                    Rainfall tracking starts on <span className="font-mono text-text">{f.season_start}</span>.
+                    The oracle will begin daily checks from that date.
+                  </p>
+                </div>
+              ) : seasonState === 'error' ? (
                 <div className="card p-6 font-mono text-xs text-oracle-trigger">
                   Rainfall data unavailable: {rainfallError}
                 </div>
@@ -95,27 +118,41 @@ export default async function FarmerDashboardPage({
           <div className="space-y-6">
             <div className="card p-6">
               <div className="section-label mb-3">Live status</div>
-              <div className="flex items-center justify-between">
-                <span className="font-display text-3xl text-text">{formatMm(totalMm)}</span>
-                <StatusBadge status={live} />
-              </div>
-              <div className="mt-2 font-mono text-[11px] text-nimbus-300/70">
-                threshold · {formatMm(f.drought_threshold_mm, 0)}
-              </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--bg-3)]">
-                <div
-                  className={`h-full ${
-                    live === 'trigger'
-                      ? 'bg-oracle-trigger'
-                      : live === 'warning'
-                        ? 'bg-oracle-warning'
-                        : 'bg-oracle-safe'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, (totalMm / Math.max(f.drought_threshold_mm * 1.5, 1)) * 100)}%`,
-                  }}
-                />
-              </div>
+              {seasonState === 'not-started' ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-3xl text-text">—</span>
+                    <StatusBadge status="pending" />
+                  </div>
+                  <div className="mt-2 font-mono text-[11px] text-nimbus-300/70">
+                    starts in {daysUntilStart} day{daysUntilStart === 1 ? '' : 's'}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-3xl text-text">{formatMm(totalMm)}</span>
+                    <StatusBadge status={live === 'pending' ? 'pending' : live} />
+                  </div>
+                  <div className="mt-2 font-mono text-[11px] text-nimbus-300/70">
+                    threshold · {formatMm(f.drought_threshold_mm, 0)}
+                  </div>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--bg-3)]">
+                    <div
+                      className={`h-full ${
+                        live === 'trigger'
+                          ? 'bg-oracle-trigger'
+                          : live === 'warning'
+                            ? 'bg-oracle-warning'
+                            : 'bg-oracle-safe'
+                      }`}
+                      style={{
+                        width: `${Math.min(100, (totalMm / Math.max(f.drought_threshold_mm * 1.5, 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="card p-6">

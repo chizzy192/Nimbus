@@ -1,11 +1,24 @@
 const BASE_URL = 'https://archive-api.open-meteo.com/v1/archive';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 
+export type SeasonState = 'ok' | 'not-started' | 'error';
+
 export interface SeasonRainfall {
+  state: SeasonState;
   totalMm: number;
   dailyMm: number[];
   dates: string[];
+  daysUntilStart: number; // > 0 when the season is still in the future
   raw: unknown;
+}
+
+function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function diffDays(a: string, b: string): number {
+  const ms = new Date(a).getTime() - new Date(b).getTime();
+  return Math.round(ms / 86_400_000);
 }
 
 export async function fetchSeasonRainfall(
@@ -14,7 +27,22 @@ export async function fetchSeasonRainfall(
   seasonStart: string,
   endDate?: string
 ): Promise<SeasonRainfall> {
-  const today = endDate ?? new Date().toISOString().split('T')[0];
+  const today = endDate ?? todayISO();
+
+  // Open-Meteo's archive 400s if start_date > end_date. Detect a future-dated
+  // season up front and return a structured "not-started" payload so callers
+  // never confuse "no data yet" with "rainfall is zero".
+  const days = diffDays(seasonStart, today);
+  if (days > 0) {
+    return {
+      state: 'not-started',
+      totalMm: 0,
+      dailyMm: [],
+      dates: [],
+      daysUntilStart: days,
+      raw: null,
+    };
+  }
 
   const url = new URL(BASE_URL);
   url.searchParams.set('latitude', String(lat));
@@ -34,7 +62,7 @@ export async function fetchSeasonRainfall(
   const dates: string[] = data.daily?.time ?? [];
   const totalMm = dailyMm.reduce((sum, d) => sum + d, 0);
 
-  return { totalMm, dailyMm, dates, raw: data };
+  return { state: 'ok', totalMm, dailyMm, dates, daysUntilStart: 0, raw: data };
 }
 
 export async function fetchRecentRainfall(
@@ -67,5 +95,5 @@ export async function fetchRecentRainfall(
   const dates: string[] = data.daily?.time ?? [];
   const totalMm = dailyMm.reduce((sum, d) => sum + d, 0);
 
-  return { totalMm, dailyMm, dates, raw: data };
+  return { state: 'ok', totalMm, dailyMm, dates, daysUntilStart: 0, raw: data };
 }
