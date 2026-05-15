@@ -6,10 +6,29 @@
 create extension if not exists "pgcrypto";
 
 -- =====================
--- FARMERS
+-- ACCOUNTS
+-- One row per user (farmer or admin). A farmer account can own many farmer
+-- (policy) rows — each "farmer" row is really one farm × one season.
+-- =====================
+create table if not exists accounts (
+  id                  uuid primary key default gen_random_uuid(),
+  role                text not null default 'farmer'
+                      check (role in ('farmer', 'admin')),
+  name                text not null,
+  phone               text unique,
+  email               text,
+  stellar_wallet      text,
+  stellar_secret      text,
+  demo_balance_usdc   numeric not null default 20,
+  created_at          timestamptz default now()
+);
+
+-- =====================
+-- FARMERS  (a policy: one farm × one season, owned by an account)
 -- =====================
 create table if not exists farmers (
   id                    uuid primary key default gen_random_uuid(),
+  account_id            uuid references accounts(id) on delete cascade,
   name                  text not null,
   phone                 text not null,
   latitude              numeric(10,6) not null,
@@ -34,9 +53,10 @@ create table if not exists farmers (
   created_at            timestamptz default now()
 );
 
-create index if not exists farmers_status_idx          on farmers(status);
-create index if not exists farmers_payout_idx          on farmers(payout_triggered);
-create index if not exists farmers_created_idx         on farmers(created_at desc);
+create index if not exists farmers_account_idx  on farmers(account_id);
+create index if not exists farmers_status_idx   on farmers(status);
+create index if not exists farmers_payout_idx   on farmers(payout_triggered);
+create index if not exists farmers_created_idx  on farmers(created_at desc);
 
 -- =====================
 -- ORACLE CHECKS
@@ -80,13 +100,18 @@ create table if not exists coverage_pools (
 create index if not exists coverage_pools_status_idx on coverage_pools(status);
 
 -- =====================
--- ROW LEVEL SECURITY
--- (server-side service-key access only; lock down anon by default)
+-- SINGLETON ADMIN ACCOUNT
+-- Seed once so /admin/settings has something to show; bigger demo balance so
+-- the operator can fund several escrows during testing.
 -- =====================
+insert into accounts (role, name, phone, demo_balance_usdc)
+values ('admin', 'Nimbus Platform Admin', null, 1000)
+on conflict do nothing;
+
+-- =====================
+-- ROW LEVEL SECURITY
+-- =====================
+alter table accounts        enable row level security;
 alter table farmers         enable row level security;
 alter table oracle_checks   enable row level security;
 alter table coverage_pools  enable row level security;
-
--- Service role bypasses RLS automatically. Public has no policies, so anon
--- queries return zero rows. Add explicit policies later if you ever expose
--- this DB directly to a browser client.

@@ -1,7 +1,20 @@
 export type FarmerStatus = 'pending' | 'active' | 'triggered' | 'expired' | 'returned';
+export type AccountRole = 'farmer' | 'admin';
+
+export interface Account {
+  id: string;
+  role: AccountRole;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  stellar_wallet: string | null;
+  demo_balance_usdc: number;
+  created_at: string;
+}
 
 export interface Farmer {
   id: string;
+  account_id: string | null;
   name: string;
   phone: string;
   latitude: number;
@@ -61,8 +74,8 @@ export interface RainfallReading {
 }
 
 export interface FarmerRegistrationPayload {
-  name: string;
-  phone: string;
+  name?: string;
+  phone?: string;
   latitude: number;
   longitude: number;
   region?: string;
