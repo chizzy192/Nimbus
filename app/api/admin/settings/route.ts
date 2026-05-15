@@ -42,7 +42,7 @@ export async function GET() {
     rpc: process.env.NEXT_PUBLIC_STELLAR_RPC ?? null,
     platform_wallet: process.env.PLATFORM_WALLET_PUBLIC ?? null,
     tw_base_url: process.env.NEXT_PUBLIC_TW_BASE_URL ?? null,
-    tw_api_key_set: Boolean(process.env.NEXT_PUBLIC_TW_API_KEY),
+    tw_api_key_set: Boolean(process.env.TW_API_KEY ?? process.env.NEXT_PUBLIC_TW_API_KEY),
     cron_secret_set: Boolean(process.env.CRON_SECRET),
     resend_key_set: Boolean(process.env.RESEND_API_KEY),
     termii_key_set: Boolean(process.env.TERMII_API_KEY),

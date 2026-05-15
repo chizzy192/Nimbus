@@ -1,7 +1,10 @@
 import { isDemoMode } from './demo-mode';
 
 const TW_BASE = process.env.NEXT_PUBLIC_TW_BASE_URL ?? 'https://dev.api.trustlesswork.com';
-const TW_KEY = process.env.NEXT_PUBLIC_TW_API_KEY ?? '';
+// Server-only TW key. Falls back to the legacy NEXT_PUBLIC_TW_API_KEY name so
+// older .env files keep working — but new keys should be set under TW_API_KEY
+// to avoid the value being inlined into client bundles by Next.js.
+const TW_KEY = process.env.TW_API_KEY ?? process.env.NEXT_PUBLIC_TW_API_KEY ?? '';
 
 function twHeaders() {
   return {
