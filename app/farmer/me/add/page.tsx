@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useFirstVisit } from '@/hooks/useFirstVisit';
-import { rememberAccount } from '@/lib/farmerSession';
+import { getRememberedAccount } from '@/lib/farmerSession';
+import type { Account } from '@/types/nimbus';
 
 const FarmMap = dynamic(() => import('@/components/FarmMap').then((m) => m.FarmMap), {
   ssr: false,
@@ -17,11 +17,9 @@ const FarmMap = dynamic(() => import('@/components/FarmMap').then((m) => m.FarmM
 });
 
 interface FormState {
-  name: string;
-  phone: string;
+  region: string;
   crop_type: string;
   farm_size_ha: string;
-  region: string;
   latitude: number | null;
   longitude: number | null;
   season_start: string;
@@ -31,31 +29,22 @@ interface FormState {
   premium_usdc: number;
 }
 
-const COVERAGE_TIERS = [
+const TIERS = [
   { coverage: 25, premium: 3 },
   { coverage: 50, premium: 5 },
   { coverage: 100, premium: 9 },
 ];
 
-export default function FarmerRegisterPage() {
+export default function AddFarmPage() {
   const router = useRouter();
-  const visit = useFirstVisit('farmer');
+  const [account, setAccount] = useState<Account | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (visit.isFirst === true) {
-      router.replace('/farmer/onboarding');
-    }
-  }, [visit.isFirst, router]);
-
   const [form, setForm] = useState<FormState>({
-    name: '',
-    phone: '',
+    region: '',
     crop_type: 'sorghum',
     farm_size_ha: '',
-    region: '',
     latitude: null,
     longitude: null,
     season_start: '',
@@ -65,34 +54,45 @@ export default function FarmerRegisterPage() {
     premium_usdc: 5,
   });
 
+  useEffect(() => {
+    const id = getRememberedAccount();
+    if (!id) {
+      router.replace('/farmer/me');
+      return;
+    }
+    fetch(`/api/accounts/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.account) setAccount(data.account);
+        else router.replace('/farmer/me');
+      });
+  }, [router]);
+
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
-
-  function selectTier(coverage: number, premium: number) {
-    setForm((f) => ({ ...f, coverage_usdc: coverage, premium_usdc: premium }));
+  function selectTier(c: number, p: number) {
+    setForm((f) => ({ ...f, coverage_usdc: c, premium_usdc: p }));
   }
-
-  function canAdvanceFrom1() {
-    return form.name.trim() && form.phone.trim() && form.crop_type;
+  function canFrom1() {
+    return form.latitude != null && form.longitude != null;
   }
-  function canAdvanceFrom2() {
-    return form.latitude != null && form.longitude != null && form.season_start && form.season_end;
+  function canFrom2() {
+    return form.season_start && form.season_end;
   }
 
   async function submit() {
+    if (!account) return;
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch('/api/accounts/register', {
+      const res = await fetch(`/api/accounts/${account.id}/farms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
-          phone: form.phone,
+          region: form.region || undefined,
           crop_type: form.crop_type,
           farm_size_ha: form.farm_size_ha ? Number(form.farm_size_ha) : undefined,
-          region: form.region || undefined,
           latitude: form.latitude!,
           longitude: form.longitude!,
           season_start: form.season_start,
@@ -104,22 +104,29 @@ export default function FarmerRegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'registration failed');
+        setError(data.error ?? 'add-farm failed');
         return;
       }
-      if (data.accountId) rememberAccount(data.accountId);
       router.push('/farmer/me');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'registration failed');
     } finally {
       setSubmitting(false);
     }
   }
 
+  if (!account) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-grid">
+        <div className="font-mono text-[11px] uppercase tracking-widest text-nimbus-400">
+          Loading…
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-grid">
       <nav className="border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">☁︎</span>
             <span className="font-head text-2xl font-extrabold text-text">Nimbus</span>
@@ -131,12 +138,15 @@ export default function FarmerRegisterPage() {
       </nav>
 
       <section className="mx-auto max-w-3xl px-6 py-16">
-        <div className="section-label mb-4">Enrollment</div>
+        <div className="section-label mb-3">Add another farm or season</div>
         <h1 className="font-display text-5xl text-text">
-          {step === 1 && 'Tell us about your farm.'}
-          {step === 2 && 'Drop a pin on your field.'}
-          {step === 3 && 'Choose your coverage.'}
+          {step === 1 && 'Drop a pin on the field.'}
+          {step === 2 && 'When does the season run?'}
+          {step === 3 && 'Choose coverage.'}
         </h1>
+        <p className="mt-3 font-mono text-[11px] text-nimbus-300/70">
+          adding under · {account.name}
+        </p>
 
         <div className="mt-8 flex gap-2">
           {[1, 2, 3].map((s) => (
@@ -151,23 +161,43 @@ export default function FarmerRegisterPage() {
 
         <div className="mt-10 card p-8">
           {step === 1 && (
+            <div className="space-y-5">
+              <FarmMap
+                pins={[]}
+                pickable
+                picked={
+                  form.latitude != null && form.longitude != null
+                    ? { lat: form.latitude, lon: form.longitude }
+                    : null
+                }
+                onPick={(lat, lon) => {
+                  set('latitude', lat);
+                  set('longitude', lon);
+                }}
+                height={380}
+              />
+              <div className="grid grid-cols-2 gap-3 font-mono text-xs text-nimbus-300">
+                <div>
+                  Latitude: <span className="text-text">{form.latitude?.toFixed(5) ?? '—'}</span>
+                </div>
+                <div>
+                  Longitude:{' '}
+                  <span className="text-text">{form.longitude?.toFixed(5) ?? '—'}</span>
+                </div>
+              </div>
+              <Field label="Region (optional)">
+                <input
+                  className={inputCls}
+                  value={form.region}
+                  onChange={(e) => set('region', e.target.value)}
+                  placeholder="Kano North"
+                />
+              </Field>
+            </div>
+          )}
+
+          {step === 2 && (
             <div className="grid gap-5">
-              <Field label="Full name">
-                <input
-                  className={inputCls}
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                  placeholder="Amina Hassan"
-                />
-              </Field>
-              <Field label="Phone (with country code)">
-                <input
-                  className={inputCls}
-                  value={form.phone}
-                  onChange={(e) => set('phone', e.target.value)}
-                  placeholder="+234 803 000 0000"
-                />
-              </Field>
               <div className="grid grid-cols-2 gap-5">
                 <Field label="Crop">
                   <select
@@ -189,47 +219,8 @@ export default function FarmerRegisterPage() {
                     step="0.1"
                     value={form.farm_size_ha}
                     onChange={(e) => set('farm_size_ha', e.target.value)}
-                    placeholder="1.5"
                   />
                 </Field>
-              </div>
-              <Field label="Region (optional)">
-                <input
-                  className={inputCls}
-                  value={form.region}
-                  onChange={(e) => set('region', e.target.value)}
-                  placeholder="Kano North"
-                />
-              </Field>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-5">
-              <p className="font-body text-sm text-nimbus-300">
-                Tap your field on the map. Drag the pin to refine the position.
-              </p>
-              <FarmMap
-                pins={[]}
-                pickable
-                picked={
-                  form.latitude != null && form.longitude != null
-                    ? { lat: form.latitude, lon: form.longitude }
-                    : null
-                }
-                onPick={(lat, lon) => {
-                  set('latitude', lat);
-                  set('longitude', lon);
-                }}
-                height={380}
-              />
-              <div className="grid grid-cols-2 gap-3 font-mono text-xs text-nimbus-300">
-                <div>
-                  Latitude: <span className="text-text">{form.latitude?.toFixed(5) ?? '—'}</span>
-                </div>
-                <div>
-                  Longitude: <span className="text-text">{form.longitude?.toFixed(5) ?? '—'}</span>
-                </div>
               </div>
               <div className="grid grid-cols-2 gap-5">
                 <Field label="Season start">
@@ -254,34 +245,28 @@ export default function FarmerRegisterPage() {
 
           {step === 3 && (
             <div className="space-y-6">
-              <div>
-                <div className="font-mono text-xs uppercase tracking-widest text-nimbus-400">
-                  Coverage tier
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-3">
-                  {COVERAGE_TIERS.map((t) => {
-                    const active = form.coverage_usdc === t.coverage;
-                    return (
-                      <button
-                        key={t.coverage}
-                        onClick={() => selectTier(t.coverage, t.premium)}
-                        className={`rounded-xl border p-5 text-left transition ${
-                          active
-                            ? 'border-nimbus-500 bg-[rgba(16,185,129,0.08)]'
-                            : 'border-[var(--border)] bg-[var(--bg-3)] hover:border-[var(--border-strong)]'
-                        }`}
-                      >
-                        <div className="font-display text-3xl text-text">${t.coverage}</div>
-                        <div className="font-mono text-xs text-nimbus-300/70">USDC coverage</div>
-                        <div className="mt-3 font-body text-sm text-nimbus-300">
-                          Premium: <span className="text-text">${t.premium}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {TIERS.map((t) => {
+                  const active = form.coverage_usdc === t.coverage;
+                  return (
+                    <button
+                      key={t.coverage}
+                      onClick={() => selectTier(t.coverage, t.premium)}
+                      className={`rounded-xl border p-5 text-left transition ${
+                        active
+                          ? 'border-nimbus-500 bg-[rgba(16,185,129,0.08)]'
+                          : 'border-[var(--border)] bg-[var(--bg-3)] hover:border-[var(--border-strong)]'
+                      }`}
+                    >
+                      <div className="font-display text-3xl text-text">${t.coverage}</div>
+                      <div className="font-mono text-xs text-nimbus-300/70">USDC coverage</div>
+                      <div className="mt-3 font-body text-sm text-nimbus-300">
+                        Premium: <span className="text-text">${t.premium}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-
               <Field label="Drought threshold (mm cumulative)">
                 <input
                   type="number"
@@ -289,35 +274,10 @@ export default function FarmerRegisterPage() {
                   value={form.drought_threshold_mm}
                   onChange={(e) => set('drought_threshold_mm', Number(e.target.value))}
                 />
-                <div className="mt-1 font-mono text-[11px] text-nimbus-300/70">
-                  Payout fires if seasonal rainfall stays below this value.
-                </div>
               </Field>
-
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-3)] p-5">
-                <div className="font-mono text-xs uppercase tracking-widest text-nimbus-400">
-                  Policy summary
-                </div>
-                <dl className="mt-3 grid grid-cols-2 gap-3 font-body text-sm">
-                  <dt className="text-nimbus-300">Farmer</dt>
-                  <dd className="text-text">{form.name || '—'}</dd>
-                  <dt className="text-nimbus-300">Location</dt>
-                  <dd className="font-mono text-xs text-text">
-                    {form.latitude?.toFixed(4)}, {form.longitude?.toFixed(4)}
-                  </dd>
-                  <dt className="text-nimbus-300">Season</dt>
-                  <dd className="text-text">
-                    {form.season_start} → {form.season_end}
-                  </dd>
-                  <dt className="text-nimbus-300">Threshold</dt>
-                  <dd className="font-mono text-text">{form.drought_threshold_mm}mm</dd>
-                  <dt className="text-nimbus-300">Coverage</dt>
-                  <dd className="font-display text-lg text-nimbus-400">
-                    ${form.coverage_usdc} USDC
-                  </dd>
-                  <dt className="text-nimbus-300">Premium due</dt>
-                  <dd className="font-display text-lg text-text">${form.premium_usdc} USDC</dd>
-                </dl>
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-3)] p-5 font-body text-sm text-nimbus-300">
+                Your demo balance: <span className="text-text">${account.demo_balance_usdc}</span>{' '}
+                · this premium will be ${form.premium_usdc}. You can pay later from the dashboard.
               </div>
             </div>
           )}
@@ -339,18 +299,14 @@ export default function FarmerRegisterPage() {
             {step < 3 ? (
               <button
                 className="btn-primary disabled:opacity-50"
-                disabled={step === 1 ? !canAdvanceFrom1() : !canAdvanceFrom2()}
+                disabled={step === 1 ? !canFrom1() : !canFrom2()}
                 onClick={() => setStep((s) => (Math.min(3, s + 1) as 1 | 2 | 3))}
               >
                 Continue →
               </button>
             ) : (
-              <button
-                className="btn-primary disabled:opacity-50"
-                disabled={submitting}
-                onClick={submit}
-              >
-                {submitting ? 'Enrolling…' : 'Confirm enrollment'}
+              <button className="btn-primary disabled:opacity-50" disabled={submitting} onClick={submit}>
+                {submitting ? 'Adding…' : 'Add farm'}
               </button>
             )}
           </div>

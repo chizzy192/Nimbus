@@ -1,33 +1,50 @@
-// Tiny client-side "remember me" helper for the farmer dashboard.
-// There is no password auth — the farmer's URL is the credential. This
-// just stores the most recent farmerId in localStorage so the user can
-// land back on their dashboard from the marketing site or after a tab close.
+// Tiny client-side "remember me" helpers. There is no password auth — the
+// account's URL is the credential. These just stash IDs in localStorage so a
+// user can land back on their dashboard or sign out cleanly.
 
-const KEY = 'nimbus.farmerId';
+const ACCOUNT_KEY = 'nimbus.accountId';
+const LEGACY_FARMER_KEY = 'nimbus.farmerId';
 
-export function rememberFarmer(id: string) {
+export function rememberAccount(id: string) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(KEY, id);
+    window.localStorage.setItem(ACCOUNT_KEY, id);
   } catch {
-    // private browsing / storage disabled — silently skip
+    /* private mode / storage disabled */
   }
 }
 
-export function getRememberedFarmer(): string | null {
+export function getRememberedAccount(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return window.localStorage.getItem(KEY);
+    return window.localStorage.getItem(ACCOUNT_KEY);
   } catch {
     return null;
   }
 }
 
-export function forgetFarmer() {
+export function forgetAccount() {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(ACCOUNT_KEY);
+    window.localStorage.removeItem(LEGACY_FARMER_KEY);
   } catch {
-    // ignore
+    /* ignore */
   }
+}
+
+// ----- Legacy aliases -----------------------------------------------------
+// The pre-accounts model stored a farmerId. We keep these named exports so
+// older imports compile, and we read both keys when looking up a session.
+
+export function rememberFarmer(id: string) {
+  rememberAccount(id);
+}
+
+export function getRememberedFarmer(): string | null {
+  return getRememberedAccount();
+}
+
+export function forgetFarmer() {
+  forgetAccount();
 }
