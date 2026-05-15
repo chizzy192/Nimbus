@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoAccounts } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +10,9 @@ const ADMIN_COLUMNS =
 const DEFAULT_ADMIN_BUDGET = 1000;
 
 async function getOrCreateAdmin() {
+  if (isDemoMode()) {
+    return demoAccounts.getAdmin();
+  }
   const supabase = supabaseServer();
   const existing = await supabase
     .from('accounts')
@@ -58,6 +63,11 @@ export async function PATCH(req: NextRequest) {
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'no editable fields supplied' }, { status: 400 });
+  }
+
+  if (isDemoMode()) {
+    const updated = demoAccounts.update(admin.id, patch);
+    return NextResponse.json({ admin: updated });
   }
 
   const supabase = supabaseServer();

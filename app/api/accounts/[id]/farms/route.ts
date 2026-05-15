@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoAccounts, demoFarmers } from '@/lib/demo-store';
 import type { FarmerRegistrationPayload } from '@/types/nimbus';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  if (isDemoMode()) {
+    const farms = demoFarmers.forAccount(params.id).map(({ stellar_secret: _omit, ...rest }) => rest);
+    return NextResponse.json({ farms });
+  }
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('farmers')
@@ -25,6 +31,36 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = (await req.json()) as FarmerRegistrationPayload;
   if (!body || body.latitude == null || body.longitude == null) {
     return NextResponse.json({ error: 'latitude and longitude required' }, { status: 400 });
+  }
+
+  if (isDemoMode()) {
+    const account = demoAccounts.get(params.id);
+    if (!account) return NextResponse.json({ error: 'account not found' }, { status: 404 });
+    const farm = demoFarmers.insert({
+      account_id: account.id,
+      name: body.name ?? account.name,
+      phone: body.phone ?? account.phone ?? '',
+      latitude: body.latitude,
+      longitude: body.longitude,
+      region: body.region ?? null,
+      crop_type: body.crop_type ?? null,
+      farm_size_ha: body.farm_size_ha ?? null,
+      season_start: body.season_start,
+      season_end: body.season_end,
+      drought_threshold_mm: body.drought_threshold_mm ?? 50,
+      coverage_usdc: body.coverage_usdc,
+      premium_usdc: body.premium_usdc,
+      premium_paid: false,
+      stellar_wallet: account.stellar_wallet,
+      stellar_secret: null,
+      contract_id: null,
+      payout_triggered: false,
+      payout_triggered_at: null,
+      trigger_rainfall_mm: null,
+      status: 'pending',
+    });
+    const { stellar_secret: _omit, ...safe } = farm;
+    return NextResponse.json({ farm: safe });
   }
 
   const supabase = supabaseServer();

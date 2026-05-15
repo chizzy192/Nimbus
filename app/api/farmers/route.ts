@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoFarmers } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  if (isDemoMode()) {
+    const farmers = demoFarmers.list().map(({ stellar_secret: _omit, ...rest }) => rest);
+    return NextResponse.json({ farmers });
+  }
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('farmers')

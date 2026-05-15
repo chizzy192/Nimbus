@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoFarmers } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  if (isDemoMode()) {
+    const farmer = demoFarmers.get(params.id);
+    if (!farmer) return NextResponse.json({ error: 'farmer not found' }, { status: 404 });
+    const { stellar_secret: _omit, ...safe } = farmer;
+    return NextResponse.json({ farmer: safe });
+  }
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('farmers')
@@ -16,6 +24,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
+  if (isDemoMode()) {
+    const updated = demoFarmers.update(params.id, body);
+    if (!updated) return NextResponse.json({ error: 'farmer not found' }, { status: 404 });
+    const { stellar_secret: _omit, ...safe } = updated;
+    return NextResponse.json({ farmer: safe });
+  }
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('farmers')

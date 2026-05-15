@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 import { decryptSecret } from '@/lib/wallet';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoFarmers } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +21,34 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'confirm_phone required' }, { status: 400 });
   }
 
-  const supabase = supabaseServer();
-  const { data: farmer, error } = await supabase
-    .from('farmers')
-    .select('id, phone, stellar_wallet, stellar_secret')
-    .eq('id', params.id)
-    .single();
+  let farmer: { phone: string; stellar_wallet: string | null; stellar_secret: string | null } | null = null;
 
-  if (error || !farmer) {
+  if (isDemoMode()) {
+    const row = demoFarmers.get(params.id);
+    if (row) {
+      farmer = {
+        phone: row.phone,
+        stellar_wallet: row.stellar_wallet,
+        stellar_secret: row.stellar_secret,
+      };
+    }
+  } else {
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
+      .from('farmers')
+      .select('id, phone, stellar_wallet, stellar_secret')
+      .eq('id', params.id)
+      .single();
+    if (!error && data) {
+      farmer = {
+        phone: data.phone,
+        stellar_wallet: data.stellar_wallet,
+        stellar_secret: data.stellar_secret,
+      };
+    }
+  }
+
+  if (!farmer) {
     return NextResponse.json({ error: 'farmer not found' }, { status: 404 });
   }
   if (!farmer.stellar_secret) {

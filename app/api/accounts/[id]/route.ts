@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoAccounts } from '@/lib/demo-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +9,11 @@ const SAFE_COLUMNS =
   'id, role, name, phone, email, stellar_wallet, demo_balance_usdc, created_at';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  if (isDemoMode()) {
+    const account = demoAccounts.get(params.id);
+    if (!account) return NextResponse.json({ error: 'account not found' }, { status: 404 });
+    return NextResponse.json({ account });
+  }
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from('accounts')
@@ -25,6 +32,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'no editable fields supplied' }, { status: 400 });
+  }
+  if (isDemoMode()) {
+    const account = demoAccounts.update(params.id, patch);
+    if (!account) return NextResponse.json({ error: 'account not found' }, { status: 404 });
+    return NextResponse.json({ account });
   }
   const supabase = supabaseServer();
   const { data, error } = await supabase

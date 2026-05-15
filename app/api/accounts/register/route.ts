@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 import { createCustodialWallet } from '@/lib/wallet';
+import { isDemoMode } from '@/lib/demo-mode';
+import { demoAccounts, demoFarmers } from '@/lib/demo-store';
 import type { FarmerRegistrationPayload } from '@/types/nimbus';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +25,50 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // ---- Demo mode --------------------------------------------------------
+  if (isDemoMode()) {
+    let account = demoAccounts.getByPhone(body.phone);
+    let encryptedSecret: string | null = null;
+    if (!account) {
+      const wallet = createCustodialWallet();
+      encryptedSecret = wallet.encryptedSecret;
+      account = demoAccounts.insert({
+        role: 'farmer',
+        name: body.name,
+        phone: body.phone,
+        email: body.email ?? null,
+        stellar_wallet: wallet.publicKey,
+        demo_balance_usdc: DEMO_STARTING_BALANCE,
+      });
+    }
+    const farmer = demoFarmers.insert({
+      account_id: account.id,
+      name: body.name,
+      phone: body.phone,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      region: body.region ?? null,
+      crop_type: body.crop_type ?? null,
+      farm_size_ha: body.farm_size_ha ?? null,
+      season_start: body.season_start,
+      season_end: body.season_end,
+      drought_threshold_mm: body.drought_threshold_mm ?? 50,
+      coverage_usdc: body.coverage_usdc,
+      premium_usdc: body.premium_usdc,
+      premium_paid: false,
+      stellar_wallet: account.stellar_wallet,
+      stellar_secret: encryptedSecret,
+      contract_id: null,
+      payout_triggered: false,
+      payout_triggered_at: null,
+      trigger_rainfall_mm: null,
+      status: 'pending',
+    });
+    const { stellar_secret: _omit, ...safeFarmer } = farmer;
+    return NextResponse.json({ accountId: account.id, farmer: safeFarmer });
+  }
+
+  // ---- Live mode --------------------------------------------------------
   const supabase = supabaseServer();
 
   // 1. Find or create the account, keyed by phone.
