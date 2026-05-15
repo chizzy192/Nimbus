@@ -119,6 +119,9 @@ export default function AdminOverviewPage() {
             <Link href="/admin/pools" className="text-nimbus-300 hover:text-text">
               Pools
             </Link>
+            <Link href="/admin/settings" className="text-nimbus-300 hover:text-text">
+              Settings
+            </Link>
             <Link
               href="/admin/onboarding"
               className="text-nimbus-300 hover:text-text"
