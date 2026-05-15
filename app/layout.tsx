@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { DemoBanner } from '@/components/DemoBanner';
 
 export const metadata: Metadata = {
   title: {
@@ -45,7 +46,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <DemoBanner />
+        {children}
+      </body>
     </html>
   );
 }
