@@ -1,3 +1,5 @@
+import { isDemoMode } from './demo-mode';
+
 const TW_BASE = process.env.NEXT_PUBLIC_TW_BASE_URL ?? 'https://dev.api.trustlesswork.com';
 const TW_KEY = process.env.NEXT_PUBLIC_TW_API_KEY ?? '';
 
@@ -6,6 +8,17 @@ function twHeaders() {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${TW_KEY}`,
   };
+}
+
+function demoContractId(prefix = 'C'): string {
+  const rand = Array.from({ length: 50 }, () =>
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.floor(Math.random() * 32)]
+  ).join('');
+  return `${prefix}DEM0${rand.slice(0, 50)}`;
+}
+
+function isTwUnavailable(): boolean {
+  return isDemoMode() || !TW_KEY;
 }
 
 interface TWResponse {
@@ -52,6 +65,12 @@ export interface DeployFarmerEscrowResult {
 export async function deployFarmerEscrow(
   farmer: DeployFarmerEscrowInput
 ): Promise<DeployFarmerEscrowResult> {
+  if (isTwUnavailable()) {
+    return {
+      unsignedXdr: `DEMO_XDR_deploy_${farmer.id}`,
+      contractId: demoContractId(),
+    };
+  }
   const PLATFORM = process.env.PLATFORM_WALLET_PUBLIC!;
   const resp = await postTW('/deployer/single-release', {
     signer: PLATFORM,
@@ -80,6 +99,7 @@ export async function deployFarmerEscrow(
 }
 
 export async function fundEscrow(contractId: string, amountUsdc: number): Promise<string> {
+  if (isTwUnavailable()) return `DEMO_XDR_fund_${contractId}_${amountUsdc}`;
   const PLATFORM = process.env.PLATFORM_WALLET_PUBLIC!;
   return pickXdr(
     await postTW('/escrow/single-release/fund-escrow', {
@@ -91,6 +111,7 @@ export async function fundEscrow(contractId: string, amountUsdc: number): Promis
 }
 
 export async function approveMilestone(contractId: string): Promise<string> {
+  if (isTwUnavailable()) return `DEMO_XDR_approve_${contractId}`;
   const PLATFORM = process.env.PLATFORM_WALLET_PUBLIC!;
   return pickXdr(
     await postTW('/escrow/single-release/approve-milestone', {
@@ -101,6 +122,7 @@ export async function approveMilestone(contractId: string): Promise<string> {
 }
 
 export async function releaseFunds(contractId: string): Promise<string> {
+  if (isTwUnavailable()) return `DEMO_XDR_release_${contractId}`;
   const PLATFORM = process.env.PLATFORM_WALLET_PUBLIC!;
   return pickXdr(
     await postTW('/escrow/single-release/release-funds', {
@@ -111,6 +133,21 @@ export async function releaseFunds(contractId: string): Promise<string> {
 }
 
 export async function getEscrowStatus(contractId: string) {
+  if (isTwUnavailable()) {
+    return {
+      contractId,
+      status: 'active',
+      balance: { currency: 'USDC', amount: '50' },
+      milestones: [
+        {
+          description: 'Drought payout',
+          amount: '50',
+          status: 'awaiting-condition',
+        },
+      ],
+      demo: true,
+    };
+  }
   const res = await fetch(`${TW_BASE}/escrow/single-release/${contractId}`, {
     headers: twHeaders(),
     cache: 'no-store',
