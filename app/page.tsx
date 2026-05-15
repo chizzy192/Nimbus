@@ -36,9 +36,17 @@ export default function LandingPage() {
               Admin
             </Link>
           </div>
-          <Link href="/farmer/onboarding" className="btn-primary text-sm">
-            Enrol your farm
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/farmer/me"
+              className="hidden font-mono text-[11px] uppercase tracking-widest text-nimbus-300 link-draw hover:text-text md:inline"
+            >
+              I have a policy
+            </Link>
+            <Link href="/farmer/onboarding" className="btn-primary text-sm">
+              Enrol your farm
+            </Link>
+          </div>
         </div>
       </nav>
 

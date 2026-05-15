@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useFirstVisit } from '@/hooks/useFirstVisit';
+import { rememberFarmer } from '@/lib/farmerSession';
 
 const FarmMap = dynamic(() => import('@/components/FarmMap').then((m) => m.FarmMap), {
   ssr: false,
@@ -106,6 +107,7 @@ export default function FarmerRegisterPage() {
         setError(data.error ?? 'registration failed');
         return;
       }
+      rememberFarmer(data.farmer.id);
       router.push(`/farmer/${data.farmer.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'registration failed');
